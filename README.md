@@ -53,6 +53,10 @@ A premium, CRED-style personal finance app built with Flutter.
   - Send/receive money via UPI
   - Transaction history
   - Real-time balance updates
+- 🤖 **AI Savings Advisor** (NEW!)
+  - Analyzes your monthly cash flow
+  - Identifies top spending categories
+  - Generates personalized, rule-based offline saving tips instantly
 - ⚙️ Settings (currency, theme, biometric lock)
 
 ## Setup Instructions
