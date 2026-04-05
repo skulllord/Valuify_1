@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'firebase_options.dart';
 import 'providers/auth_provider.dart';
 import 'providers/theme_provider.dart';
@@ -19,6 +20,14 @@ import 'utils/colors.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Load environment variables
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    debugPrint("Could not load .env file");
+  }
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -124,6 +133,13 @@ class AuthWrapper extends ConsumerWidget {
 
         // Initialize wallet for new users
         WalletService().initializeWallet(user.uid, user.email ?? '');
+
+        // Background script to forcibly migrate lingering USD database records to INR
+        FirestoreService().getSettings(user.uid).first.then((settings) {
+          if (settings['currency'] == 'USD' || settings['currency'] == null) {
+            FirestoreService().updateSettings(user.uid, {'currency': 'INR', 'currencySymbol': '₹'});
+          }
+        }).catchError((e) => debugPrint("Migration error: $e"));
 
         return const MainScreen();
       },

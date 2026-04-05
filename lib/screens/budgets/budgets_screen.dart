@@ -4,6 +4,7 @@ import '../../models/budget_model.dart';
 import '../../providers/budget_provider.dart';
 import '../../providers/category_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/settings_provider.dart';
 import '../../services/firestore_service.dart';
 import '../../utils/helpers.dart';
 import '../../utils/constants.dart';
@@ -17,6 +18,7 @@ class BudgetsScreen extends ConsumerWidget {
     final currentMonth = ref.watch(currentMonthProvider);
     final budgetsAsync = ref.watch(budgetsProvider);
     final categoriesAsync = ref.watch(categoriesProvider);
+    final currencySymbol = ref.watch(currencySymbolProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -60,8 +62,9 @@ class BudgetsScreen extends ConsumerWidget {
                     category: category,
                     budget: budget,
                     progress: progress,
+                    currencySymbol: currencySymbol,
                     onTap: () {
-                      _showSetBudgetDialog(context, ref, category, budget);
+                      _showSetBudgetDialog(context, ref, category, budget, currencySymbol);
                     },
                   );
                 },
@@ -82,6 +85,7 @@ class BudgetsScreen extends ConsumerWidget {
     WidgetRef ref,
     category,
     BudgetModel? existingBudget,
+    String currencySymbol,
   ) {
     final controller = TextEditingController(
       text: existingBudget?.amount.toString() ?? '',
@@ -94,9 +98,9 @@ class BudgetsScreen extends ConsumerWidget {
         content: TextField(
           controller: controller,
           keyboardType: TextInputType.number,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             labelText: 'Budget Amount',
-            prefixText: '\$ ',
+            prefixText: '$currencySymbol ',
           ),
         ),
         actions: [
@@ -136,12 +140,14 @@ class _BudgetCard extends StatelessWidget {
   final category;
   final BudgetModel? budget;
   final double progress;
+  final String currencySymbol;
   final VoidCallback onTap;
 
   const _BudgetCard({
     required this.category,
     required this.budget,
     required this.progress,
+    required this.currencySymbol,
     required this.onTap,
   });
 
@@ -199,7 +205,7 @@ class _BudgetCard extends StatelessWidget {
                       ),
                       if (budget != null)
                         Text(
-                          'Budget: ${Helpers.formatCurrency(budget!.amount, '\$')}',
+                          'Budget: ${Helpers.formatCurrency(budget!.amount, currencySymbol)}',
                           style: TextStyle(
                             fontSize: 13,
                             color: Colors.grey[600],

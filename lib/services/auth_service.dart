@@ -94,8 +94,8 @@ class AuthService {
 
       // Create default settings
       await userDoc.collection('settings').doc('preferences').set({
-        'currency': 'USD',
-        'currencySymbol': '\$',
+        'currency': 'INR',
+        'currencySymbol': '₹',
         'theme': 'system',
         'biometricEnabled': false,
       });

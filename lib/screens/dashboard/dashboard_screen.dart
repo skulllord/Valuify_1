@@ -3,12 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/transaction_provider.dart';
 import '../../providers/category_provider.dart';
+import '../../providers/settings_provider.dart';
+import '../../providers/budget_provider.dart';
 import '../../widgets/balance_card.dart';
 import '../../widgets/transaction_item.dart';
 import '../../widgets/chart_widgets.dart';
 import '../../utils/helpers.dart';
 import '../../utils/constants.dart';
 import '../transactions/add_transaction_screen.dart';
+import '../transactions/transactions_screen.dart';
+import '../../widgets/ai_insights_sheet.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -18,6 +22,8 @@ class DashboardScreen extends ConsumerWidget {
     final user = ref.watch(currentUserProvider);
     final transactionsAsync = ref.watch(transactionsProvider);
     final categoriesAsync = ref.watch(categoriesProvider);
+    final currencySymbol = ref.watch(currencySymbolProvider);
+    final budgetsAsync = ref.watch(budgetsProvider);
     final currentMonth = DateTime.now();
     final stats = ref.watch(monthlyStatsProvider(currentMonth));
 
@@ -69,7 +75,7 @@ class DashboardScreen extends ConsumerWidget {
                         const SizedBox(height: AppConstants.spacing24),
                         BalanceCard(
                           balance: balance,
-                          currencySymbol: '\$',
+                          currencySymbol: currencySymbol,
                         ),
                         const SizedBox(height: AppConstants.spacing24),
                         Row(
@@ -78,7 +84,7 @@ class DashboardScreen extends ConsumerWidget {
                               child: _StatCard(
                                 title: 'Income',
                                 amount: stats['income'] ?? 0.0,
-                                currencySymbol: '\$',
+                                currencySymbol: currencySymbol,
                                 isIncome: true,
                               ),
                             ),
@@ -87,7 +93,7 @@ class DashboardScreen extends ConsumerWidget {
                               child: _StatCard(
                                 title: 'Expense',
                                 amount: stats['expense'] ?? 0.0,
-                                currencySymbol: '\$',
+                                currencySymbol: currencySymbol,
                                 isIncome: false,
                               ),
                             ),
@@ -107,6 +113,137 @@ class DashboardScreen extends ConsumerWidget {
                           labels: trendLabels,
                         ),
                         const SizedBox(height: AppConstants.spacing24),
+                        // AI Advisor Button
+                        InkWell(
+                          onTap: () => showAiInsightsSheet(context),
+                          borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF8A2387), Color(0xFFE94057), Color(0xFFF27121)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFFE94057).withOpacity(0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                )
+                              ],
+                            ),
+                            child: const Row(
+                              children: [
+                                Icon(Icons.auto_awesome, color: Colors.white),
+                                SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    'Get AI Savings Insights',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                Icon(Icons.chevron_right, color: Colors.white),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: AppConstants.spacing24),
+                        const Text(
+                          'Budget Progress',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: AppConstants.spacing12),
+                        budgetsAsync.when(
+                          data: (budgets) {
+                            if (budgets.isEmpty) {
+                              return const Text('No budgets set yet. Tap on the Budgets tab to set one!');
+                            }
+                            return categoriesAsync.when(
+                              data: (categories) {
+                                return Column(
+                                  children: budgets.map((budget) {
+                                    final category = categories.firstWhere(
+                                      (c) => c.id == budget.categoryId,
+                                      orElse: () => categories.first,
+                                    );
+                                    final progress = ref.watch(budgetProgressProvider(category.id));
+                                    final isDark = Theme.of(context).brightness == Brightness.dark;
+                                    final hasExceeded = progress > 1.0;
+                                    final isNearLimit = progress > 0.8 && progress <= 1.0;
+                                    
+                                    return Container(
+                                      margin: const EdgeInsets.only(bottom: AppConstants.spacing12),
+                                      padding: const EdgeInsets.all(AppConstants.spacing12),
+                                      decoration: BoxDecoration(
+                                        color: isDark ? Colors.grey[900] : Colors.white,
+                                        borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+                                        border: Border.all(
+                                          color: isDark ? Colors.grey[800]! : Colors.grey[200]!,
+                                        ),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  Text(category.icon, style: const TextStyle(fontSize: 18)),
+                                                  const SizedBox(width: 8),
+                                                  Text(category.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                                                ],
+                                              ),
+                                              Text(
+                                                '${(progress * 100).toStringAsFixed(0)}%',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: hasExceeded ? Colors.red : (isNearLimit ? Colors.orange : Colors.green),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 8),
+                                          ClipRRect(
+                                            borderRadius: BorderRadius.circular(4),
+                                            child: LinearProgressIndicator(
+                                              value: progress > 1.0 ? 1.0 : progress,
+                                              minHeight: 6,
+                                              backgroundColor: isDark ? Colors.grey[800] : Colors.grey[200],
+                                              valueColor: AlwaysStoppedAnimation(
+                                                hasExceeded ? Colors.red : (isNearLimit ? Colors.orange : Colors.green),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'Budget: ${Helpers.formatCurrency(budget.amount, currencySymbol)}',
+                                            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  }).toList(),
+                                );
+                              },
+                              loading: () => const Center(child: CircularProgressIndicator()),
+                              error: (_, __) => const Text('Error loading categories'),
+                            );
+                          },
+                          loading: () => const Center(child: CircularProgressIndicator()),
+                          error: (_, __) => const Text('Error loading budgets'),
+                        ),
+                        const SizedBox(height: AppConstants.spacing24),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -119,7 +256,10 @@ class DashboardScreen extends ConsumerWidget {
                             ),
                             TextButton(
                               onPressed: () {
-                                // Navigate to transactions screen
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => const TransactionsScreen()),
+                                );
                               },
                               child: const Text('See All'),
                             ),
@@ -142,7 +282,7 @@ class DashboardScreen extends ConsumerWidget {
                             return TransactionItem(
                               transaction: transaction,
                               category: categoryMap[transaction.categoryId],
-                              currencySymbol: '\$',
+                              currencySymbol: currencySymbol,
                             );
                           },
                           childCount: recentTransactions.length,

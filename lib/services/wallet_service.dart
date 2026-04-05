@@ -53,6 +53,7 @@ class WalletService {
     required String recipientUpiId,
     required String recipientName,
     required double amount,
+    required String categoryId,
     String? note,
   }) async {
     try {
@@ -117,7 +118,7 @@ class WalletService {
         userId: userId,
         amount: amount,
         type: 'expense',
-        categoryId: 'upi_payment', // Special category for UPI
+        categoryId: categoryId,
         date: DateTime.now(),
         merchant: recipientName,
         notes:
@@ -152,6 +153,7 @@ class WalletService {
     required String senderUpiId,
     required String senderName,
     required double amount,
+    required String categoryId,
     String? note,
   }) async {
     try {
@@ -208,7 +210,7 @@ class WalletService {
         userId: userId,
         amount: amount,
         type: 'income',
-        categoryId: 'upi_received', // Special category for UPI
+        categoryId: categoryId,
         date: DateTime.now(),
         merchant: senderName,
         notes:

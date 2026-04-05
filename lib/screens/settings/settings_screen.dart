@@ -17,8 +17,8 @@ class SettingsScreen extends ConsumerStatefulWidget {
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   final LocalAuthentication _localAuth = LocalAuthentication();
   bool _biometricEnabled = false;
-  String _selectedCurrency = 'USD';
-  String _currencySymbol = '\$';
+  String _selectedCurrency = 'INR';
+  String _currencySymbol = '₹';
 
   @override
   void initState() {
@@ -34,8 +34,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         if (mounted) {
           setState(() {
             _biometricEnabled = settings['biometricEnabled'] ?? false;
-            _selectedCurrency = settings['currency'] ?? 'USD';
-            _currencySymbol = settings['currencySymbol'] ?? '\$';
+            _selectedCurrency = settings['currency'] ?? 'INR';
+            _currencySymbol = settings['currencySymbol'] ?? '₹';
           });
         }
       });

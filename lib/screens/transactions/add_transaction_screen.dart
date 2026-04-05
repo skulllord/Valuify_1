@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import '../../models/transaction_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/category_provider.dart';
+import '../../providers/settings_provider.dart';
 import '../../services/firestore_service.dart';
 import '../../services/storage_service.dart';
 import '../../widgets/category_icon.dart';
@@ -117,6 +118,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   @override
   Widget build(BuildContext context) {
     final categoriesAsync = ref.watch(categoriesProvider);
+    final currencySymbol = ref.watch(currencySymbolProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -171,7 +173,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                     style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
                     decoration: InputDecoration(
                       labelText: 'Amount',
-                      prefixText: '\$ ',
+                      prefixText: '$currencySymbol ',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
                       ),

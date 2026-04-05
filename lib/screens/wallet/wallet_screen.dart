@@ -220,8 +220,10 @@ class WalletScreen extends ConsumerWidget {
                   title: 'Scan QR Code',
                   subtitle: 'Scan to pay instantly',
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('QR Scanner coming soon!')),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const UpiPaymentScreen(type: 'send')),
                     );
                   },
                 ),
@@ -230,9 +232,10 @@ class WalletScreen extends ConsumerWidget {
                   title: 'Send to Contact',
                   subtitle: 'Pay your saved contacts',
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('Contacts feature coming soon!')),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const UpiPaymentScreen(type: 'send')),
                     );
                   },
                 ),

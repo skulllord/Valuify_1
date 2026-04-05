@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/wallet_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/settings_provider.dart';
+import '../../providers/category_provider.dart';
 import '../../services/wallet_service.dart';
 import '../../utils/constants.dart';
 import '../../utils/colors.dart';
@@ -22,6 +23,7 @@ class _UpiPaymentScreenState extends ConsumerState<UpiPaymentScreen> {
   final _nameController = TextEditingController();
   final _amountController = TextEditingController();
   final _noteController = TextEditingController();
+  String? _selectedCategoryId;
   bool _isLoading = false;
 
   @override
@@ -57,6 +59,7 @@ class _UpiPaymentScreenState extends ConsumerState<UpiPaymentScreen> {
           recipientUpiId: upiId,
           recipientName: name,
           amount: amount,
+          categoryId: _selectedCategoryId!,
           note: note.isEmpty ? null : note,
         );
       } else {
@@ -65,6 +68,7 @@ class _UpiPaymentScreenState extends ConsumerState<UpiPaymentScreen> {
           senderUpiId: upiId,
           senderName: name,
           amount: amount,
+          categoryId: _selectedCategoryId!,
           note: note.isEmpty ? null : note,
         );
       }
@@ -172,6 +176,9 @@ class _UpiPaymentScreenState extends ConsumerState<UpiPaymentScreen> {
   Widget build(BuildContext context) {
     final walletAsync = ref.watch(walletProvider);
     final currencySymbol = ref.watch(currencySymbolProvider);
+    final categories = widget.type == 'send'
+        ? ref.watch(expenseCategoriesProvider)
+        : ref.watch(incomeCategoriesProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -297,6 +304,40 @@ class _UpiPaymentScreenState extends ConsumerState<UpiPaymentScreen> {
                         BorderRadius.circular(AppConstants.radiusMedium),
                   ),
                 ),
+              ),
+              const SizedBox(height: AppConstants.spacing16),
+              DropdownButtonFormField<String>(
+                value: _selectedCategoryId,
+                decoration: InputDecoration(
+                  labelText: 'Transaction Category',
+                  prefixIcon: const Icon(Icons.category),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+                  ),
+                ),
+                items: categories.map((category) {
+                  return DropdownMenuItem(
+                    value: category.id,
+                    child: Row(
+                      children: [
+                        Text(category.icon),
+                        const SizedBox(width: 8),
+                        Text(category.name),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedCategoryId = value;
+                  });
+                },
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please select a category';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: AppConstants.spacing24),
               ElevatedButton(

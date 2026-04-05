@@ -4,6 +4,7 @@ import '../../providers/transaction_provider.dart';
 import '../../providers/category_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/firestore_service.dart';
+import '../../providers/settings_provider.dart';
 import '../../widgets/transaction_item.dart';
 import '../../utils/constants.dart';
 import 'add_transaction_screen.dart';
@@ -24,6 +25,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
     final user = ref.watch(currentUserProvider);
     final transactionsAsync = ref.watch(transactionsProvider);
     final categoriesAsync = ref.watch(categoriesProvider);
+    final currencySymbol = ref.watch(currencySymbolProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -76,7 +78,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                   return TransactionItem(
                     transaction: transaction,
                     category: categoryMap[transaction.categoryId],
-                    currencySymbol: '\$',
+                    currencySymbol: currencySymbol,
                     onTap: () {
                       Navigator.push(
                         context,

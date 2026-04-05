@@ -1,4 +1,8 @@
 import 'dart:io';
+import 'dart:convert';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:universal_html/html.dart' as html;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:csv/csv.dart';
@@ -6,6 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
 import '../../providers/transaction_provider.dart';
 import '../../providers/category_provider.dart';
+import '../../providers/settings_provider.dart';
 import '../../services/pdf_service.dart';
 import '../../utils/helpers.dart';
 import '../../utils/constants.dart';
@@ -51,23 +56,38 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
       }
 
       String csv = const ListToCsvConverter().convert(rows);
+      final fileName = 'transactions_${_selectedMonth.year}_${_selectedMonth.month}.csv';
 
-      final directory = await getApplicationDocumentsDirectory();
-      final file = File(
-        '${directory.path}/transactions_${_selectedMonth.year}_${_selectedMonth.month}.csv',
-      );
-      await file.writeAsString(csv);
+      if (kIsWeb) {
+        final bytes = utf8.encode(csv);
+        final blob = html.Blob([bytes]);
+        final url = html.Url.createObjectUrlFromBlob(blob);
+        html.AnchorElement(href: url)
+          ..setAttribute("download", fileName)
+          ..click();
+        html.Url.revokeObjectUrl(url);
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('CSV download started!')),
+          );
+        }
+      } else {
+        final directory = await getApplicationDocumentsDirectory();
+        final file = File('${directory.path}/$fileName');
+        await file.writeAsString(csv);
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('CSV exported to ${file.path}'),
-            action: SnackBarAction(
-              label: 'Open',
-              onPressed: () => OpenFile.open(file.path),
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('CSV exported to ${file.path}'),
+              action: SnackBarAction(
+                label: 'Open',
+                onPressed: () => OpenFile.open(file.path),
+              ),
             ),
-          ),
-        );
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -93,23 +113,45 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
             t.date.month == _selectedMonth.month;
       }).toList();
 
-      final file = await PdfService().generateMonthlyReport(
+      final currencySymbol = ref.read(currencySymbolProvider);
+
+      final Uint8List pdfBytes = await PdfService().generateMonthlyReport(
         _selectedMonth,
         monthTransactions,
         categoryMap,
-        '\$',
+        currencySymbol,
       );
+      final fileName = 'report_${_selectedMonth.year}_${_selectedMonth.month}.pdf';
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('PDF exported to ${file.path}'),
-            action: SnackBarAction(
-              label: 'Open',
-              onPressed: () => OpenFile.open(file.path),
+      if (kIsWeb) {
+        final blob = html.Blob([pdfBytes], 'application/pdf');
+        final url = html.Url.createObjectUrlFromBlob(blob);
+        html.AnchorElement(href: url)
+          ..setAttribute("download", fileName)
+          ..click();
+        html.Url.revokeObjectUrl(url);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('PDF download started!')),
+          );
+        }
+      } else {
+        final directory = await getApplicationDocumentsDirectory();
+        final file = File('${directory.path}/$fileName');
+        await file.writeAsBytes(pdfBytes);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('PDF exported to ${file.path}'),
+              action: SnackBarAction(
+                label: 'Open',
+                onPressed: () => OpenFile.open(file.path),
+              ),
             ),
-          ),
-        );
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -125,6 +167,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   @override
   Widget build(BuildContext context) {
     final stats = ref.watch(monthlyStatsProvider(_selectedMonth));
+    final currencySymbol = ref.watch(currencySymbolProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -209,18 +252,21 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                   _SummaryRow(
                     label: 'Total Income',
                     amount: stats['income'] ?? 0.0,
+                    currencySymbol: currencySymbol,
                     color: Colors.green,
                   ),
                   const SizedBox(height: AppConstants.spacing8),
                   _SummaryRow(
                     label: 'Total Expense',
                     amount: stats['expense'] ?? 0.0,
+                    currencySymbol: currencySymbol,
                     color: Colors.red,
                   ),
                   const Divider(height: 24),
                   _SummaryRow(
                     label: 'Net',
                     amount: stats['net'] ?? 0.0,
+                    currencySymbol: currencySymbol,
                     color: (stats['net'] ?? 0.0) >= 0 ? Colors.green : Colors.red,
                     isBold: true,
                   ),
@@ -266,12 +312,14 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
 class _SummaryRow extends StatelessWidget {
   final String label;
   final double amount;
+  final String currencySymbol;
   final Color color;
   final bool isBold;
 
   const _SummaryRow({
     required this.label,
     required this.amount,
+    required this.currencySymbol,
     required this.color,
     this.isBold = false,
   });
@@ -289,7 +337,7 @@ class _SummaryRow extends StatelessWidget {
           ),
         ),
         Text(
-          Helpers.formatCurrency(amount, '\$'),
+          Helpers.formatCurrency(amount, currencySymbol),
           style: TextStyle(
             fontSize: 16,
             fontWeight: isBold ? FontWeight.bold : FontWeight.w600,

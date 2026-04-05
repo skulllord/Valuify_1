@@ -43,6 +43,9 @@ dependencies:
   path_provider: ^2.1.1
   csv: ^5.1.1
   open_file: ^3.3.2
+  google_generative_ai: ^0.4.7
+  flutter_dotenv: ^6.0.0
+  universal_html: ^2.3.0
 
 dev_dependencies:
   flutter_test:
@@ -55,3 +58,5 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+    - .env
+
