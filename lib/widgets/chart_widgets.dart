@@ -38,13 +38,18 @@ class TrendLineChart extends StatelessWidget {
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
+                interval: 1,
+                reservedSize: 30, // to prevent cutting off bottom words
                 getTitlesWidget: (value, meta) {
-                  if (value.toInt() >= 0 && value.toInt() < labels.length) {
-                    return Text(
-                      labels[value.toInt()],
-                      style: TextStyle(
-                        color: isDark ? Colors.grey[400] : Colors.grey[600],
-                        fontSize: 12,
+                  if (value % 1 == 0 && value.toInt() >= 0 && value.toInt() < labels.length) {
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        labels[value.toInt()],
+                        style: TextStyle(
+                          color: isDark ? Colors.grey[400] : Colors.grey[600],
+                          fontSize: 12,
+                        ),
                       ),
                     );
                   }

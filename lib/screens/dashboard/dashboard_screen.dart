@@ -24,7 +24,8 @@ class DashboardScreen extends ConsumerWidget {
     final categoriesAsync = ref.watch(categoriesProvider);
     final currencySymbol = ref.watch(currencySymbolProvider);
     final budgetsAsync = ref.watch(budgetsProvider);
-    final currentMonth = DateTime.now();
+    final _now = DateTime.now();
+    final currentMonth = DateTime(_now.year, _now.month);
     final stats = ref.watch(monthlyStatsProvider(currentMonth));
 
     return Scaffold(

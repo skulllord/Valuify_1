@@ -31,14 +31,14 @@ class AIService {
     if (netIncome < 0) {
       tips.add("You're currently spending more than your total income. Try to review your non-essential expenses this week.");
     } else if (netIncome > 0) {
-      tips.add("Great job keeping a positive balance! Consider investing or saving the remaining \$${netIncome.toStringAsFixed(0)}.");
+      tips.add("Great job keeping a positive balance! Consider investing or saving the remaining ₹${netIncome.toStringAsFixed(0)}.");
     }
 
     // 2. Find the highest spending category
     if (categoryTotals.isNotEmpty) {
       var topCategory = categoryTotals.entries.reduce((a, b) => a.value > b.value ? a : b);
       if (topCategory.value > 0) {
-        tips.add("Your highest expense is ${topCategory.key} (\$${topCategory.value.toStringAsFixed(0)}). Setting a strict budget for this category could yield the biggest savings.");
+        tips.add("Your highest expense is ${topCategory.key} (₹${topCategory.value.toStringAsFixed(0)}). Setting a strict budget for this category could yield the biggest savings.");
       }
     }
 
